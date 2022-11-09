@@ -1,4 +1,4 @@
-- 👋 Hi, I’m @ultrasoundcode
+- 👋 Hi, I’m Askhat 
 - 👀 I’m interested in JavaScript
 - 🌱 I’m currently learning Front-End in GoIT
 - 📫 How to reach me https://t.me/blineblinsky
