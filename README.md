@@ -1,5 +1,5 @@
 - 👋 Hi, I’m Askhat 
-- 📫 How to reach me https://t.me/blineblinsky
+- 📫 telegram https://t.me/blineblinsky
 
 <!---
 ultrasoundcode/ultrasoundcode is a ✨ special ✨ repository because its `README.md` (this file) appears on your GitHub profile.
