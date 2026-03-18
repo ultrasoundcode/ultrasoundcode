@@ -2,8 +2,8 @@
 
 not ultrasound, especially code.
 
-### 🐍 GitHub Contribution Snake
-![github contribution grid snake](https://raw.githubusercontent.com/ultrasoundcode/ultrasoundcode/output/github-contribution-grid-snake.svg)
+### 📊 Contributions
+![ultrasoundcode's GitHub contributions](https://ghchart.rshah.org/ultrasoundcode)
 
 ---
 
