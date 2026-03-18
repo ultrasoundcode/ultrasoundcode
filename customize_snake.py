@@ -5,63 +5,78 @@ def customize_snake(file_path):
     with open(file_path, 'r') as f:
         content = f.read()
 
-    # 1. Change colors to match GitHub's green theme
-    # Snake color: #39d353 (active green)
-    content = re.sub(r'--cs:[^;]+', '--cs:#39d353', content)
-    
-    # 2. Slow down animation (already done or to be done)
+    # 1. Slow down animation (already done or to be done)
     match = re.search(r'(\d+)ms', content)
     if match:
         original_duration = int(match.group(1))
-        # Keep it slow (multiply by 3)
-        if original_duration < 20000: # avoid double multiplying if run twice
+        # Multiply by 3 for slow motion
+        if original_duration < 20000:
            new_duration = original_duration * 3
            content = content.replace(f'{original_duration}ms', f'{new_duration}ms')
 
-    # 3. Force all snake segments to have the same size (14.4)
-    # This ensures they look like the grid cubes
-    content = re.sub(r'width="[0-9.]+" height="[0-9.]+" rx="[0-9.]+" ry="[0-9.]+"', 
-                     'width="14.4" height="14.4" rx="4.5" ry="4.5"', content)
+    # 2. Fix sizes of all snake segments to head size (usually 14.4 or 12)
+    # Actually, let's make them match the grid cubes which are often 12.
+    # We'll find the grid cube size from the CSS for .c { width: ... }
+    grid_size_match = re.search(r'\.c\{[^}]*width:(\d+)px', content)
+    if grid_size_match:
+        grid_size = grid_size_match.group(1)
+        grid_size_float = float(grid_size)
+        # Assuming grid size is 12, the snake should be slightly larger? 
+        # No, user said "same size".
+        target_size = grid_size
+        target_rx = str(float(grid_size) * 0.3) # reasonable roundness
+    else:
+        target_size = "12"
+        target_rx = "2"
 
-    # 4. Add segments s4, s5, s6 (Total 7: s0 to s6)
-    
-    # First: find the base keyframe animation s0
-    # @keyframes s0{...}
+    # Fix all <rect class="s ..."> sizes
+    content = re.sub(r'(<rect class="s s\d+"[^>]*width=")[0-9.]+"', r'\1' + target_size + '"', content)
+    content = re.sub(r'(<rect class="s s\d+"[^>]*height=")[0-9.]+"', r'\1' + target_size + '"', content)
+    content = re.sub(r'(<rect class="s s\d+"[^>]*rx=")[0-9.]+"', r'\1' + target_rx + '"', content)
+    content = re.sub(r'(<rect class="s s\d+"[^>]*ry=")[0-9.]+"', r'\1' + target_rx + '"', content)
+
+    # 3. Add segments s4, s5, s6 (Total 7)
     s0_match = re.search(r'@keyframes s0\{(.*?)\}', content, re.DOTALL)
-    if s0_match:
-        s0_keyframes = s0_match.group(1)
+    style_end_match = re.search(r'</style>', content)
+    svg_end_match = re.search(r'</svg>', content)
+    
+    if s0_match and style_end_match and svg_end_match:
+        s0_keyframes_body = s0_match.group(1)
+        style_end_pos = style_end_match.start()
         
-        # Determine the step percentage (offset between s0 and s1)
-        # s1 starts at roughly 0.83% according to my previous grep
-        # But we can calculate it: 100 / total_steps. 
-        # For simplicity, we'll extract it from s1 if s1 exists.
-        s1_match = re.search(r'@keyframes s1\{(\d+\.\d+)%', content)
-        if s1_match:
-             step_pct = float(s1_match.group(1))
-        else:
-             step_pct = 0.83 # Default fallback
-             
-        # Generate new keyframes s4, s5, s6
+        # Determine step percentage
+        s1_key_match = re.search(r'@keyframes s1\{(\d+\.\d+)%', content)
+        step_pct = float(s1_key_match.group(1)) if s1_key_match else 0.83
+        
+        new_css = ""
+        new_rects = ""
+        
         for i in range(4, 7):
             offset = step_pct * i
-            # Function to shift percentages in keyframe string
             def shift_pct(match):
                 pct = float(match.group(1))
-                new_pct = (pct + offset) % 100 # Keep within 0-100
+                new_pct = (pct + offset) % 100
                 return f'{new_pct:.2f}%'
             
-            new_keyframes = re.sub(r'(\d+(?:\.\d+)?)%', shift_pct, s0_keyframes)
-            content += f'\n@keyframes s{i}{{{new_keyframes}}}'
+            shifted_keyframes = re.sub(r'(\d+(?:\.\d+)?)%', shift_pct, s0_keyframes_body)
+            new_css += f'\n@keyframes s{i}{{{shifted_keyframes}}}'
             
-            # Add CSS for new segment
-            # We also need to set the initial transform correctly.
-            # Usually it's transform:translate(Xpx, -16px) where X = i * 16
-            x_offset = i * 16
-            content += f'\n.s.s{i}{{transform:translate({x_offset}px,-16px);animation-name:s{i}}}'
+            # Find last segment x offset to guess new ones
+            x_offset = i * 16 # rough estimate based on 16px grid
+            new_css += f'\n.s.s{i}{{transform:translate({x_offset}px,-16px);animation-name:s{i}}}'
             
-            # Add the <rect> tag before the </svg>
-            new_rect = f'<rect class="s s{i}" x="0.8" y="0.8" width="14.4" height="14.4" rx="4.5" ry="4.5"/>'
-            content = content.replace('</svg>', f'{new_rect}</svg>')
+            # Add <rect> tag
+            new_rects += f'<rect class="s s{i}" x="0.8" y="0.8" width="{target_size}" height="{target_size}" rx="{target_rx}" ry="{target_rx}"/>'
+        
+        # Insert CSS before </style>
+        content = content[:style_end_pos] + new_css + content[style_end_pos:]
+        
+        # Re-find svg_end because content length changed
+        svg_end_match = re.search(r'</svg>', content)
+        svg_end_pos = svg_end_match.start()
+        
+        # Insert rects before </svg>
+        content = content[:svg_end_pos] + new_rects + content[svg_end_pos:]
 
     with open(file_path, 'w') as f:
         f.write(content)

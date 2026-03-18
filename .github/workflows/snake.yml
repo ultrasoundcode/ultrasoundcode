@@ -22,11 +22,11 @@ jobs:
           github_user_name: ${{ github.repository_owner }}
           outputs: |
             dist/github-contribution-grid-snake.svg
-            dist/github-contribution-grid-snake-dark.svg?palette=github-dark
+            dist/github-contribution-grid-snake-dark.svg?palette=github-dark&color_snake=#39d353&color_dots=#ebedf0,#9be9a8,#40c463,#30a14e,#216e39
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: customize snake (color, size, length, speed)
+      - name: customize snake (length, size, speed)
         run: |
           python3 customize_snake.py dist/github-contribution-grid-snake.svg
           python3 customize_snake.py dist/github-contribution-grid-snake-dark.svg
