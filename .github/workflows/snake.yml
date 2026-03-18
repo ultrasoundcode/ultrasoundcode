@@ -14,6 +14,8 @@ jobs:
     timeout-minutes: 10
     
     steps:
+      - uses: actions/checkout@v3
+
       - name: generate github-contribution-grid-snake.svg
         uses: Platane/snk/svg-only@v3
         with:
@@ -24,17 +26,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: slow down the animation
+      - name: customize snake (color, size, length, speed)
         run: |
-          # Find the duration (e.g., 12100ms) and multiply by 3 to slow down
-          for file in dist/*.svg; do
-            duration=$(grep -oE '[0-9]+ms' "$file" | head -n 1 | sed 's/ms//')
-            if [ ! -z "$duration" ]; then
-              new_duration=$((duration * 3))
-              sed -i "s/${duration}ms/${new_duration}ms/g" "$file"
-              echo "Slowed down $file from ${duration}ms to ${new_duration}ms"
-            fi
-          done
+          python3 customize_snake.py dist/github-contribution-grid-snake.svg
+          python3 customize_snake.py dist/github-contribution-grid-snake-dark.svg
           
       - name: push github-contribution-grid-snake.svg to the output branch
         uses: crazy-max/ghaction-github-pages@v3.1.0

@@ -2,7 +2,6 @@
 
 not ultrasound, especially code.
 
-### 🐍 GitHub Contribution Snake (Slow Mode)
 ![github contribution grid snake](https://raw.githubusercontent.com/ultrasoundcode/ultrasoundcode/output/github-contribution-grid-snake.svg)
 
 ---
